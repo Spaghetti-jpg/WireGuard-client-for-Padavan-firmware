@@ -36,6 +36,12 @@ Thanks to ipset and dnsmasq, all subdomains of sites will be routed through the 
 ./wg-client.sh start | stop | restart | update | clean
 ```
 
+- start - starts the client
+- stop - stops the client
+- restart - restarts the client
+- update - re-resolves IP domains from domains.txt
+- clean - cleans the Ipset table. After startup either use update or Dnsmasq will add IP addresses to Ipset as you visit sites from the `unblock.dnsmasq` list. 
+
 ## Dependencies:
 - Padavan firmware compiled with `CONFIG_FIRMWARE_INCLUDE_WIREGUARD=y`
 - Ipset v7.11
