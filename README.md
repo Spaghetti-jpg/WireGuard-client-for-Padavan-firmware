@@ -93,7 +93,7 @@ Thanks to ipset and dnsmasq, all subdomains of sites will be routed through the 
     conf-file=/etc/storage/repo/unblock.dnsmasq
     ```
     Save the configuration.
-For users whose ISP modifies DNS requests or who need DNS over HTTPS (optional):
+9. For users whose ISP modifies DNS requests or who need DNS over HTTPS (optional).
 If you compiled the firmware with the CONFIG_FIRMWARE_INCLUDE_DOH=y flag, you can use doh_proxy to enable DoH.
 
 Run the command:
