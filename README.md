@@ -54,9 +54,9 @@ Thanks to ipset and dnsmasq, all subdomains of sites will be routed through the 
 1. Download or clone this repository to your PC.
 2. Upload the project directory to the router with the command:
     ```sh
-    scp -r <this repository> admin@192.168.1.1:/etc/storage
+    scp -r WireGuard-client-for-Padavan-firmware admin@192.168.1.1:/etc/storage
     ```
-3. Connect via SSH to the router and navigate to the `/etc/storage/repo` directory.
+3. Connect via SSH to the router and navigate to the `/etc/storage/WireGuard-client-for-Padavan-firmware` directory.
 4. Use `vi` to edit the `wg-client.sh` file and change these variables to your own values:
     ```sh
     IFACE="wg0"
