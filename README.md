@@ -120,3 +120,56 @@ Run the command
 curl --interface wg0 ident.me
 ```
 If everything works, then you will receive the IP address of your Wireguard server
+
+## Example of Ipset table
+```sh
+ipset -L
+Name: unblock-list
+Type: hash:net
+Revision: 7
+Header: family inet hashsize 1024 maxelem 65536 timeout 18000 comment bucketsize 12 initval 0x662602a5
+Size in memory: 3585
+References: 1
+Number of entries: 40
+Members:
+172.67.6.182 timeout 17882 comment "4pda.to"
+142.250.203.142 timeout 17965 comment "youtube-ui.l.google.com"
+216.58.215.110 timeout 17965 comment "youtube-ui.l.google.com"
+142.250.186.214 timeout 17966 comment "i.ytimg.com"
+130.255.77.28 timeout 17877 comment "ntc.party"
+193.46.255.29 timeout 17879 comment "rutor.info"
+172.217.130.145 timeout 17991 comment "rr1.sn-axq7sn76.googlevideo.com"
+188.93.16.211 timeout 17879 comment "speedtest.selectel.ru"
+142.250.203.214 timeout 17966 comment "i.ytimg.com"
+49.12.234.183 timeout 17884 comment "ident.me"
+142.250.75.14 timeout 17884 comment "youtu.be"
+85.119.149.3 timeout 17875 comment "selectel.ru"
+216.58.209.22 timeout 17966 comment "i.ytimg.com"
+142.250.186.206 timeout 17967 comment "youtube-ui.l.google.com"
+216.58.208.193 timeout 17876 comment "yt3.ggpht.com"
+142.250.203.206 timeout 17968 comment "youtube-ui.l.google.com"
+172.217.16.22 timeout 17968 comment "i.ytimg.com"
+34.160.111.145 timeout 17876 comment "ifconfig.me"
+104.22.35.226 timeout 17882 comment "4pda.to"
+195.201.201.32 timeout 17875 comment "2ip.ru"
+142.250.186.193 timeout 17991 comment "photos-ugc.l.googleusercontent.com"
+104.21.50.150 timeout 17878 comment "static.rutracker.cc"
+172.217.16.14 timeout 17969 comment "youtube-ui.l.google.com"
+172.217.16.46 timeout 17969 comment "youtube-ui.l.google.com"
+206.253.89.128 timeout 17882 comment "apis.google.com"
+172.217.131.105 timeout 17969 comment "rr4.sn-q4flrnle.googlevideo.com"
+104.22.34.226 timeout 17882 comment "4pda.to"
+173.194.163.23 timeout 17992 comment "rr5.sn-axq7sn7z.googlevideo.com"
+188.114.96.11 timeout 17881 comment "returnyoutubedislikeapi.com"
+216.58.215.78 timeout 17883 comment "play.google.com"
+142.250.75.22 timeout 17969 comment "i.ytimg.com"
+172.217.16.54 timeout 17970 comment "i.ytimg.com"
+216.58.208.206 timeout 17970 comment "youtube-ui.l.google.com"
+216.58.215.86 timeout 17970 comment "i.ytimg.com"
+142.250.203.150 timeout 17971 comment "i.ytimg.com"
+188.114.97.11 timeout 17881 comment "returnyoutubedislikeapi.com"
+173.194.57.170 timeout 17971 comment "rr5.sn-q4fl6n66.googlevideo.com"
+216.58.209.14 timeout 17992 comment "youtube.com"
+172.67.163.237 timeout 17878 comment "static.rutracker.cc"
+142.250.203.132 timeout 17878 comment "googlevideo.com"
+```
