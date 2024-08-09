@@ -6,7 +6,7 @@ No opkg, no dig, no usb port.
 
 ## How It Works
 
-The script reads the `domains.txt` file, resolves the domains using `nslookup` to get their IP addresses, and then adds them to an `ipset` table. After that, the script creates a configuration file for `dnsmasq` and writes the domains from `domains.txt` in the format `ipset=/domain.com/unblock-wg`. When new IPs are added to the `ipset` table, a timeout is set for them, after which the IP is removed, and a comment with the domain name is added for clarity. IP addresses are removed after 12 hours or 43,200 seconds. This removal is necessary to avoid routing domains that have changed their IP addresses. Dnsmask adds IP addresses to the IP address table only if the dns server makes a request for them.
+The script reads the `domains.txt` file, resolves the domains using `nslookup` to get their IP addresses, and then adds them to an `ipset` table. After that, the script creates a configuration file for `dnsmasq` and writes the domains from `domains.txt` in the format `ipset=/domain.com/unblock-list`. When new IPs are added to the `ipset` table, a timeout is set for them, after which the IP is removed, and a comment with the domain name is added for clarity. IP addresses are removed after 12 hours or 43,200 seconds. This removal is necessary to avoid routing domains that have changed their IP addresses. Dnsmask adds IP addresses to the IP address table only if the dns server makes a request for them.
 
 Since `dnsmasq` cannot add IP addresses to `ipset` with a comment, I created a function to check for the presence of a comment in `ipset` entries. If there is no comment, the function will search for IP addresses in the `syslog.log` file and add the domain name from there. This is much faster than using `nslookup`, etc.
 
@@ -96,7 +96,7 @@ Thanks to ipset and dnsmasq, all subdomains of sites will be routed through the 
 8. Go to the router’s web interface and open `dnsmasq.conf` via `LAN`, `DHCP Server`, `Additional Settings`, `User Configuration File (dnsmasq.conf)`. Add the following lines to this config:
     ```sh
     log-queries
-    conf-file=/etc/storage/repo/unblock.dnsmasq
+    conf-file=/etc/storage/WireGuard-client-for-Padavan-firmware/unblock.dnsmasq
     ```
     Save the configuration.
 9. For users whose ISP modifies DNS requests or who need DNS over HTTPS (optional).
