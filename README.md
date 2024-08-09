@@ -1,4 +1,5 @@
-# WireGuard Client for Padavan firmware with selective traffic routing for sites
+# WireGuard client for routers based on Padavan firmware with the function of selective routing of traffic via VPN
+
 
 This client was created primarily for personal use and specific tasks, one of which is selectively routing website traffic through a WireGuard VPN.
 
