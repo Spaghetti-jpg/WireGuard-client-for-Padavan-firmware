@@ -11,11 +11,17 @@ MTU="1280"
 DOMAINS_FILE="domains.txt"
 DNSMASQ_FILE="unblock.dnsmasq"
 SYSLOG_FILE="/tmp/syslog.log"
-UPDATE_INTERVAL=20
-PID_FILE="/tmp/wg2_update_ipset.pid"
+COMMENT_UPDATE_INTERVAL=20
+DOMAINS_UPDATE_INTERVAL=21600
+PID_FILE="/tmp/update_ipset.pid"
+
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
 
 log() {
-  echo "$@" >&2
+  local color=$2
+  echo -e "${color}${1}${NC}" >&2
 }
 
 create_ipset() {
@@ -29,7 +35,7 @@ resolve_and_update_ipset() {
   log "Resolving domains and updating ipset $IPSET_NAME..."
 
   if [ ! -f "$DOMAINS_FILE" ]; then
-    log "Error: File with unblockable resources $DOMAINS_FILE not found!"
+    log "Error: File with unblockable resources $DOMAINS_FILE not found!" $RED
     exit 1
   fi
 
@@ -64,20 +70,23 @@ update_ipset_from_syslog() {
             domain = $(i+1)
           }
           if ($NF == ip) {
-            system("ipset del " ipset_name " " ip)
-            system("ipset add " ipset_name " " ip " comment \"" domain "\"")
+            system("ipset -! add " ipset_name " " ip " comment \"" domain "\"")
           }
         }
       }'
   done
 }
 
+remove_pid() {
+  local pid=$1
+  sed -i "/^${pid}$/d" $PID_FILE
+}
 
 start() {
-  log "Starting WireGuard interface $IFACE..."
+  log "\nStarting WireGuard interface $IFACE...\n" $GREEN
 
   if [ ! -f "$WG_CONFIG" ]; then
-    log "Error: WireGuard config file $WG_CONFIG not found!"
+    log "Error: WireGuard config file $WG_CONFIG not found!" $RED
     exit 1
   fi
 
@@ -107,16 +116,38 @@ start() {
   ip route add default dev $IFACE table 1
   ip route add $WG_SERVER/$WG_MASK dev $IFACE
 
-  log "WireGuard interface $IFACE started."
+  log "\nWireGuard interface $IFACE started.\n" $GREEN
 
   ( while true; do
       update_ipset_from_syslog
-      sleep $UPDATE_INTERVAL
-    done ) & echo $! > $PID_FILE
+      sleep $COMMENT_UPDATE_INTERVAL &
+      child_pid=$!
+      echo $child_pid >> $PID_FILE
+      wait $child_pid
+      remove_pid $child_pid
+    done ) &
+  echo $! >> $PID_FILE
+
+  ( while true; do
+      update
+      sleep $DOMAINS_UPDATE_INTERVAL &
+      child_pid=$!
+      echo $child_pid >> $PID_FILE
+      wait $child_pid
+      remove_pid $child_pid
+    done ) &
+  echo $! >> $PID_FILE
 }
 
 stop() {
-  log "Stopping WireGuard interface $IFACE..."
+  log "\nStopping WireGuard interface $IFACE...\n" $RED
+
+  if [ -f "$PID_FILE" ]; then
+    while read -r PID; do
+      kill $PID
+    done < $PID_FILE
+    rm -f $PID_FILE
+  fi
 
   clean
 
@@ -129,29 +160,28 @@ stop() {
   ip link set $IFACE down
   ip link delete dev $IFACE
 
-  log "WireGuard interface $IFACE stopped."
-
-  if [ -f "$PID_FILE" ]; then
-    PID=$(cat $PID_FILE)
-    kill $PID
-    rm -f $PID_FILE
-  fi
+  log "\nWireGuard interface $IFACE stopped.\n" $RED
 }
 
 update() {
-  resolve_and_update_ipset
+  if [ -f "$PID_FILE" ]; then
+    resolve_and_update_ipset >/dev/null 2>&1
+  else
+    resolve_and_update_ipset
+  fi
 }
 
 clean() {
-  log "Cleaning ipset $IPSET_NAME..."
+  log "Starting to clean ipset set: $IPSET_NAME..."
 
   if ipset list $IPSET_NAME > /dev/null 2>&1; then
     ipset flush $IPSET_NAME
-    log "ipset $IPSET_NAME flushed."
+    log "Ipset set $IPSET_NAME successfully flushed."
   else
-    log "ipset $IPSET_NAME does not exist."
+    log "Ipset set $IPSET_NAME does not exist."
   fi
 }
+
 
 trap 'log "Script interrupted, cleaning up..."; stop; exit 1' INT TERM
 
@@ -173,7 +203,7 @@ case "$1" in
     clean
     ;;
   *)
-    log "Usage: $0 start, stop, restart, update, clean"
+    log "Usage: $0 start, stop, restart, update, clean" $RED
     exit 1
     ;;
 esac
