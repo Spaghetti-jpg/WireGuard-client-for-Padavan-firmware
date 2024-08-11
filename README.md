@@ -21,8 +21,7 @@ update_ipset_from_syslog() {
             domain = $(i+1)
           }
           if ($NF == ip) {
-            system("ipset del " ipset_name " " ip)
-            system("ipset add " ipset_name " " ip " comment \"" domain "\"")
+            system("ipset -! add " ipset_name " " ip " comment \"" domain "\"")
           }
         }
       }'
