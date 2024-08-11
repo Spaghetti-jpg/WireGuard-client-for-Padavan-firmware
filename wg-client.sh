@@ -45,7 +45,7 @@ resolve_and_update_ipset() {
     [ -z "$line" ] && continue
     [ "${line:0:1}" = "#" ] && continue
 
-    ADDR=$(nslookup $line localhost 2>/dev/null | awk '/^Address [0-9]*: / && $3 ~ /^[0-9]+\./ && $3 != "127.0.0.1" {print $3}')
+    ADDR=$(nslookup $line localhost | awk '/Address [0-9]+: / {ip=$3} /Address: / {ip=$2} ip ~ /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/ && ip != "127.0.0.1" {print ip}')
 
     if [ -n "$ADDR" ]; then
       for IP_HOST in $ADDR; do
