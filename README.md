@@ -5,6 +5,8 @@ This client was created primarily for personal use and specific tasks, one of wh
 
 No opkg, no dig, no usb port.
 
+# Only for bypassing geo-blocks!
+
 ## How It Works
 
 The script reads the `domains.txt` file, resolves the domains using `nslookup` to get their IP addresses, and then adds them to an `ipset` table. After that, the script creates a configuration file for `dnsmasq` and writes the domains from `domains.txt` in the format `ipset=/domain.com/unblock-list`. When new IPs are added to the `ipset` table, a timeout is set for them, after which the IP is removed, and a comment with the domain name is added for clarity. IP addresses are removed after 12 hours or 43,200 seconds. This removal is necessary to avoid routing domains that have changed their IP addresses. To keep the set of IP addresses of the main domains from the domains.txt file up to date, the script will update them every 6 hours (21600 seconds). Dnsmask adds IP addresses to the IP address table only if the dns server makes a request for them.
