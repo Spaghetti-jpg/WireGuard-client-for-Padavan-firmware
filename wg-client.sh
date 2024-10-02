@@ -13,14 +13,13 @@ COMMENT_UPDATE_INTERVAL="20"
 DOMAINS_UPDATE_INTERVAL="10800"
 IPSET_BACKUP_INTERVAL="10800"
 
-
 DOMAINS_FILE="config/domains.lst"
 CIDR_FILE="config/CIDR.lst"
 DNSMASQ_FILE="/tmp/unblock.dnsmasq"
 SYSLOG_FILE="/tmp/syslog.log"
 PID_FILE="/tmp/update_ipset.pid"
 IPSET_BACKUP_FILE="config/ipset_backup.conf"
-IPSET_BACKUP="false" #true/false
+IPSET_BACKUP="false" # true/false
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -63,7 +62,7 @@ resolve_and_update_ipset() {
   : > $DNSMASQ_FILE
 
   resolve_domain() {
-    local domain=$1
+    local domain="$1"
     ADDR=$(nslookup $domain localhost | awk '/Address [0-9]+: / {ip=$3} /Address: / {ip=$2} ip ~ /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/ && ip != "127.0.0.1" {print ip}')
 
     if [ -n "$ADDR" ]; then
@@ -105,7 +104,6 @@ update_ipset_from_cidr() {
   log "Ipset $IPSET_NAME updated with CIDR ranges."
 }
 
-
 update_ipset_from_syslog() {
   ipset list $IPSET_NAME | grep '^ *[0-9]' | grep -v 'comment' | awk '{print $1}' | while read -r ip; do
     grep "reply .* is ${ip}" $SYSLOG_FILE | awk -v ip="${ip}" -v ipset_name="$IPSET_NAME" '
@@ -123,11 +121,12 @@ update_ipset_from_syslog() {
 }
 
 remove_pid() {
-  local pid=$1
+  local pid="$1"
   sed -i "/^${pid}$/d" $PID_FILE
 }
 
 start() {
+
   log "\nStarting WireGuard interface $IFACE...\n" $GREEN
 
   modprobe wireguard
@@ -165,33 +164,35 @@ start() {
   ( while true; do
       update_ipset_from_syslog
       sleep $COMMENT_UPDATE_INTERVAL &
-      child_pid=$!
+      child_pid="$!"
       echo $child_pid >> $PID_FILE
       wait $child_pid
       remove_pid $child_pid
     done ) &
 
-  echo $! >> $PID_FILE
+  echo "$!" >> $PID_FILE
 
   ( while true; do
       save_ipset
       sleep $IPSET_BACKUP_INTERVAL &
-      child_pid=$!
+      child_pid="$!"
       echo $child_pid >> $PID_FILE
       wait $child_pid
       remove_pid $child_pid
     done ) &
+
+  echo "$!" >> $PID_FILE
 
   ( while true; do
-      update
+      update &
       sleep $DOMAINS_UPDATE_INTERVAL &
-      child_pid=$!
+      child_pid="$!"
       echo $child_pid >> $PID_FILE
       wait $child_pid
       remove_pid $child_pid
     done ) &
 
-  echo $! >> $PID_FILE
+  echo "$!" >> $PID_FILE
 
   if [ "$IPSET_BACKUP" != "true" ]; then
     log "Skipping ipset backup as IPSET_BACKUP is not true." $RED
@@ -202,10 +203,8 @@ stop() {
   log "\nStopping WireGuard interface $IFACE...\n" $RED
 
   if [ -f "$PID_FILE" ]; then
-    while read -r PID; do
-      kill $PID
-    done < $PID_FILE
-    rm -f $PID_FILE
+    xargs kill < "$PID_FILE"
+    rm -f "$PID_FILE"
   fi
 
   clean
@@ -262,6 +261,7 @@ case "$1" in
     ;;
   *)
     log "Usage: $0 start, stop, restart, update, clean" $RED
+
     exit 1
     ;;
 esac
