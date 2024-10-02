@@ -9,8 +9,9 @@ WG_CONFIG="wg0.conf"
 IPSET_NAME="unblock-list"
 
 IPSET_TIMEOUT="43200"
-COMMENT_UPDATE_INTERVAL=20
-DOMAINS_UPDATE_INTERVAL=10800
+COMMENT_UPDATE_INTERVAL="20"
+DOMAINS_UPDATE_INTERVAL="10800"
+IPSET_BACKUP_INTERVAL="10800"
 
 
 DOMAINS_FILE="config/domains.lst"
@@ -174,6 +175,15 @@ start() {
 
   ( while true; do
       save_ipset
+      sleep $IPSET_BACKUP_INTERVAL &
+      child_pid=$!
+      echo $child_pid >> $PID_FILE
+      wait $child_pid
+      remove_pid $child_pid
+    done ) &
+
+  ( while true; do
+      update
       sleep $DOMAINS_UPDATE_INTERVAL &
       child_pid=$!
       echo $child_pid >> $PID_FILE
