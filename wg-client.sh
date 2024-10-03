@@ -131,7 +131,12 @@ start() {
 
   modprobe wireguard
   modprobe ip_set
+  modprobe ip_set_hash_ip
   modprobe ip_set_hash_net
+  modprobe ip_set_bitmap_ip
+  modprobe ip_set_list_set
+  modprobe xt_set
+  
 
   if [ ! -f "$WG_CONFIG" ]; then
     log "Error: WireGuard config file $WG_CONFIG not found!" $RED
