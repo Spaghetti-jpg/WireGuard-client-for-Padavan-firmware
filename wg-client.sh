@@ -15,7 +15,7 @@ IPSET_BACKUP_INTERVAL="10800"
 
 DOMAINS_FILE="config/domains.lst"
 CIDR_FILE="config/CIDR.lst"
-DNSMASQ_FILE="/tmp/unblock.dnsmasq"
+DNSMASQ_FILE="config/unblock.dnsmasq"
 SYSLOG_FILE="/tmp/syslog.log"
 PID_FILE="/tmp/update_ipset.pid"
 IPSET_BACKUP_FILE="config/ipset_backup.conf"
