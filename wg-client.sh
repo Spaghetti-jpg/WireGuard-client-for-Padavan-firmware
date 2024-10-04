@@ -15,7 +15,7 @@ IPSET_BACKUP_INTERVAL="10800"
 
 DOMAINS_FILE="config/domains.lst"
 CIDR_FILE="config/CIDR.lst"
-DNSMASQ_FILE="config/unblock.dnsmasq"
+DNSMASQ_FILE="/tmp/unblock.dnsmasq"
 SYSLOG_FILE="/tmp/syslog.log"
 PID_FILE="/tmp/update_ipset.pid"
 IPSET_BACKUP_FILE="config/ipset_backup.conf"
@@ -28,6 +28,17 @@ NC='\033[0m' # No Color
 log() {
   local color=$2
   echo -e "${color}${1}${NC}" >&2
+}
+
+wait_for_dnsmasq() {
+  log "\nWaiting for dnsmasq to start..." $GREEN
+  if ! pgrep dnsmasq > /dev/null 2>&1; then
+    while ! pgrep dnsmasq > /dev/null 2>&1; do
+      sleep 5
+    done
+  else
+    sleep 5
+  fi
 }
 
 create_ipset() {
@@ -126,9 +137,6 @@ remove_pid() {
 }
 
 start() {
-
-  log "\nStarting WireGuard interface $IFACE...\n" $GREEN
-
   modprobe wireguard
   modprobe ip_set
   modprobe ip_set_hash_ip
@@ -136,7 +144,10 @@ start() {
   modprobe ip_set_bitmap_ip
   modprobe ip_set_list_set
   modprobe xt_set
-  
+
+  wait_for_dnsmasq
+
+  log "\nStarting WireGuard interface $IFACE...\n" $GREEN
 
   if [ ! -f "$WG_CONFIG" ]; then
     log "Error: WireGuard config file $WG_CONFIG not found!" $RED
