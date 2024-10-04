@@ -15,7 +15,8 @@ IPSET_BACKUP_INTERVAL="10800"
 
 DOMAINS_FILE="config/domains.lst"
 CIDR_FILE="config/CIDR.lst"
-DNSMASQ_FILE="/tmp/unblock.dnsmasq"
+DNSMASQ_FILE="unblock.dnsmasq"
+DNSMASQ_DIR="config/Dnsmasq"
 SYSLOG_FILE="/tmp/syslog.log"
 PID_FILE="/tmp/update_ipset.pid"
 IPSET_BACKUP_FILE="config/ipset_backup.conf"
@@ -70,7 +71,8 @@ resolve_and_update_ipset() {
     exit 1
   fi
 
-  : > $DNSMASQ_FILE
+  DNSMASQ_PATH="$DNSMASQ_DIR/$DNSMASQ_FILE"
+  : > "$DNSMASQ_PATH"
 
   resolve_domain() {
     local domain="$1"
@@ -81,7 +83,7 @@ resolve_and_update_ipset() {
         ipset -exist add $IPSET_NAME $IP_HOST timeout $IPSET_TIMEOUT comment "$domain"
       done
     fi
-    printf "ipset=/%s/%s\n" "$domain" "$IPSET_NAME" >> $DNSMASQ_FILE
+    printf "ipset=/%s/%s\n" "$domain" "$IPSET_NAME" >> "$DNSMASQ_PATH"
   }
 
   while read -r line || [ -n "$line" ]; do
@@ -89,12 +91,12 @@ resolve_and_update_ipset() {
     [ "${line:0:1}" = "#" ] && continue
 
     resolve_domain "$line" &
-  done < $DOMAINS_FILE
+  done < "$DOMAINS_FILE"
 
   wait
 
   log "\nIpset $IPSET_NAME updated."
-  log "Dnsmasq config file $DNSMASQ_FILE updated."
+  log "Dnsmasq config file $DNSMASQ_PATH updated."
   log "Sending HUP signal to dnsmasq..."
   killall -HUP dnsmasq
 }
@@ -137,6 +139,8 @@ remove_pid() {
 }
 
 start() {
+  mkdir -p "$DNSMASQ_DIR"
+
   modprobe wireguard
   modprobe ip_set
   modprobe ip_set_hash_ip
