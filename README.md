@@ -106,7 +106,7 @@ Thanks to ipset and dnsmasq, all subdomains of sites will be routed through the 
 10. Go to the router’s web interface and open `dnsmasq.conf` via `LAN`, `DHCP Server`, `Additional Settings`, `User Configuration File (dnsmasq.conf)`. Add the following lines to this config:
     ```sh
     log-queries
-    conf-file=/etc/storage/WireGuard-client-for-Padavan-firmware/config/unblock.dnsmasq
+    conf-dir=/etc/storage/WireGuard-client-for-Padavan-firmware/Dnsmasq/config/
     ```
     Save the configuration.
 11. To automatically run the script after turning on the router, you can place the command (optional)
