@@ -12,6 +12,8 @@ IPSET_TIMEOUT="43200"
 COMMENT_UPDATE_INTERVAL="20"
 DOMAINS_UPDATE_INTERVAL="10800"
 IPSET_BACKUP_INTERVAL="10800"
+MAX_PARALLEL_PROCESSES=30
+
 
 DOMAINS_FILE="config/domains.lst"
 CIDR_FILE="config/CIDR.lst"
@@ -74,9 +76,11 @@ resolve_and_update_ipset() {
   DNSMASQ_PATH="$DNSMASQ_DIR/$DNSMASQ_FILE"
   : > "$DNSMASQ_PATH"
 
+  active_processes=0   
+
   resolve_domain() {
     local domain="$1"
-    ADDR=$(nslookup $domain localhost | awk '/Address [0-9]+: / {ip=$3} /Address: / {ip=$2} ip ~ /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/ && ip != "127.0.0.1" {print ip}')
+    ADDR=$(nslookup $domain localhost 2>/dev/null | awk '/Address [0-9]+: / {ip=$3} /Address: / {ip=$2} ip ~ /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/ && ip != "127.0.0.1" {print ip}')
 
     if [ -n "$ADDR" ]; then
       for IP_HOST in $ADDR; do
@@ -91,6 +95,13 @@ resolve_and_update_ipset() {
     [ "${line:0:1}" = "#" ] && continue
 
     resolve_domain "$line" &
+
+    active_processes=$((active_processes + 1))
+
+    if [ "$active_processes" -ge "$MAX_PARALLEL_PROCESSES" ]; then
+      wait -n
+      active_processes=$((active_processes - 1))
+    fi
   done < "$DOMAINS_FILE"
 
   wait
@@ -100,6 +111,7 @@ resolve_and_update_ipset() {
   log "Sending HUP signal to dnsmasq..."
   killall -HUP dnsmasq
 }
+
 
 update_ipset_from_cidr() {
   log "Adding CIDR to ipset $IPSET_NAME from $CIDR_FILE file..."
