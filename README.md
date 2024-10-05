@@ -9,7 +9,17 @@ No opkg, no dig, no usb port.
 
 ## How It Works
 
-The script reads the `domains.txt` file, resolves the domains using `nslookup` to get their IP addresses, and then adds them to an `ipset` table. After that, the script creates a configuration file for `dnsmasq` and writes the domains from `domains.txt` in the format `ipset=/domain.com/unblock-list`. When new IPs are added to the `ipset` table, a timeout is set for them, after which the IP is removed, and a comment with the domain name is added for clarity. IP addresses are removed after 12 hours or 43,200 seconds. This removal is necessary to avoid routing domains that have changed their IP addresses. To keep the set of IP addresses of the main domains from the domains.txt file up to date, the script will update them every 6 hours (21600 seconds). Dnsmask adds IP addresses to the IP address table only if the dns server makes a request for them.
+The script reads the `domains.lst` file, resolves the domains using `nslookup` to get their IP addresses, and then adds them to the `ipset` table. The script then creates a configuration file for `dnsmasq` and writes the domains from `domains.lst` into it in the format `ipset=/domain.com/unblock-list`. When new IP addresses are added to the `ipset` table, they are given a timeout, after which the IP address is deleted, and a comment with the domain name is added for clarity. IP addresses are deleted after 12 hours or 43,200 seconds. This deletion is necessary to avoid routing domains that have changed their IP addresses. To keep the set of top domain IP addresses from the `domains.lst` file up to date, the script will update them every 6 hours (21,600 seconds). Dnsmasq adds IP addresses to the IP address table only if a DNS server makes a query for them.
+
+Resolving domains from the `domains.lst` file is performed asynchronously, which allows you to work with large lists of domains. The number of threads is limited to 30 in the `MAX_PARALLEL_PROCESSES` variable. 
+
+> [!WARNING]  
+> Do not increase the value of `MAX_PARALLEL_PROCESSES` beyond 30 to avoid router hangs! 
+My router has 64 MB, for this amount of DRAM, 30 threads is considered the optimal value. Do not try to increase this value with less DRAM!
+
+Every 3 hours (10,800 seconds) the update function is called, which resolve the domains from `domains.lst` to IP addresses and adds them to the set of IP addresses to keep it up-to-date. The time before the update is declared in the variable `DOMAINS_UPDATE_INTERVAL`
+
+Implementation of "asynchronous" domain resolution using `nslookup` allowed to speed up work with a large list of domains in domains.lst
 
 Since `dnsmasq` cannot add IP addresses to `ipset` with a comment, I created a function to check for the presence of a comment in `ipset` entries. If there is no comment, the function will search for IP addresses in the `syslog.log` file and add the domain name from there. This is much faster than using `nslookup`, etc.
 
@@ -41,11 +51,12 @@ Thanks to ipset and dnsmasq, all subdomains of sites will be routed through the 
 - start - starts the client
 - stop - stops the client
 - restart - restarts the client
-- update - re-resolves IP domains from domains.txt
+- update - re-resolves IP domains from domains.lst (Use if you added new domains to domains.lst)
 - clean - cleans the Ipset table. After startup either use update or Dnsmasq will add IP addresses to Ipset as you visit sites from the `unblock.dnsmasq` list. 
 
 ## Dependencies:
 - Padavan firmware compiled with `CONFIG_FIRMWARE_INCLUDE_WIREGUARD=y`
+- BusyBox v1.36.1 built-in shell (ash)
 - Ipset v7.11
 - Dnsmasq v2.90
 - Nslookup
@@ -94,27 +105,36 @@ Thanks to ipset and dnsmasq, all subdomains of sites will be routed through the 
     Endpoint = the IP and port of your WireGuard server
     PersistentKeepalive = 25
     ```
-7. Add the required domains to the `domains.txt` file. To check functionality, add the domain `ident.me`.
-8. Go to the router’s web interface and open `dnsmasq.conf` via `LAN`, `DHCP Server`, `Additional Settings`, `User Configuration File (dnsmasq.conf)`. Add the following lines to this config:
+7. Make the `wg-client.sh` file executable using the command:
+    ```sh
+    chmod +x wg-client.sh
+    ```
+8. Run wg-client with the command `wg-client.sh start`
+9. Add the required domains to the `domains.lst` file. To check functionality, add the domain `ident.me`.
+10. Go to the router’s web interface and open `dnsmasq.conf` via `LAN`, `DHCP Server`, `Additional Settings`, `Custom Configuration File "dnsmasq.conf"`. Add the following lines to this config:
     ```sh
     log-queries
-    conf-file=/etc/storage/WireGuard-client-for-Padavan-firmware/unblock.dnsmasq
+    conf-dir=/etc/storage/WireGuard-client-for-Padavan-firmware/Dnsmasq/config/
     ```
     Save the configuration.
-9. For users whose ISP modifies DNS requests or who need DNS over HTTPS (optional).
-If you compiled the firmware with the `CONFIG_FIRMWARE_INCLUDE_DOH=y` flag, you can use doh_proxy to enable DoH.
+11. To automatically run the script after turning on the router, you can place the command (optional)
+    ```sh
+    (cd /etc/storage/WireGuard-client-for-Padavan-firmware && ./wg-client.sh start >/dev/null 2>&1) &
+    ```
+    in the file `/etc/storage/started_script.sh` or use the router's web interface by going to `Customization`, `Scripts`, `Run After Router Started`.
+12. The script implements IPset backup and recovery. If your power goes out or you frequently reboot your router, you can change the value of the `IPSET_BACKUP="false"` variable to true in the script code, the backup will be saved along the path `config/ipset_backup.conf`. Backup occurs every 3 hours, its time is declared in the `IPSET_BACKUP_INTERVAL` variable. Restoration from the backup occurs when the script is restarted (`wg-client.sh start`)
+13. For users whose ISP modifies DNS requests or who need DNS over HTTPS (optional).
+If you compiled the firmware with the `CONFIG_FIRMWARE_INCLUDE_DOH=y` flag, you can use doh_proxy to enable DoH. Run the command:
 
-Run the command:
-
-```sh
-/usr/sbin/doh_proxy -4 -p 5353 -d -b 1.1.1.2,1.0.0.2 -r https://cloudflare-dns.com/dns-query
-```
-
-Add the following lines to the dnsmasq.conf file:
-```sh
-no-resolv
-server=127.0.0.1#5353
-```
+    ```sh
+    /usr/sbin/doh_proxy -4 -p 5353 -d -b 1.1.1.2,1.0.0.2 -r https://cloudflare-dns.com/dns-query
+    ```
+    Add the following lines to the dnsmasq.conf file:
+    ```sh
+    no-resolv
+    server=127.0.0.1#5353
+    ```
+    To autorun this command, you can add it to the webui under `Customization`, `Scripts`, `Run After Router Started`.
 ## Work check
 
 Run the command
