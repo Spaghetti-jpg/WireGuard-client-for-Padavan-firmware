@@ -13,6 +13,15 @@ The script reads the `domains.lst` file, resolves the domains using `nslookup` t
 
 Resolving domains from the `domains.lst` file is performed asynchronously, which allows you to work with large lists of domains. The number of threads is limited to 30 in the `MAX_PARALLEL_PROCESSES` variable. 
 
+Added support for working with CIDR lists. Lists should be placed in the `config/CIDR.lst` file.
+
+Example of CIDR.lst file
+```sh
+8.8.4.0/24
+8.8.8.0/24
+35.184.0.0/13
+```
+
 > [!WARNING]  
 > Do not increase the value of `MAX_PARALLEL_PROCESSES` beyond 30 to avoid router hangs! 
 My router has 64 MB, for this amount of DRAM, 30 threads is considered the optimal value. Do not try to increase this value with less DRAM!
