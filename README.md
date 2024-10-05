@@ -7,7 +7,13 @@ No opkg, no dig, no usb port.
 
 ## How It Works
 
-The script reads the `domains.lst` file, resolves the domains using `nslookup` to get their IP addresses, and then adds them to the `ipset` table. The script then creates a configuration file for `dnsmasq` and writes the domains from `domains.lst` in the format `ipset=/domain.com/unblock-list`. When new IP addresses are added to the `ipset` table, they are given a timeout, after which the IP address is removed and a comment with the domain name is added for clarity. IP addresses are removed after 12 hours or 43,200 seconds. This removal is necessary to avoid routing domains that have changed their IP addresses. To keep the set of top domain IP addresses from the `domains.lst` file up to date, the script will update them every 6 hours (21,600 seconds). Dnsmask adds IP addresses to the IP address table only if the DNS server makes a request for them.
+The script reads the `domains.lst` file, resolves the domains using `nslookup` to get their IP addresses, and then adds them to the `ipset` table. The script then creates a configuration file for `dnsmasq` and writes the domains from `domains.lst` into it in the format `ipset=/domain.com/unblock-list`. When new IP addresses are added to the `ipset` table, they are given a timeout, after which the IP address is deleted, and a comment with the domain name is added for clarity. IP addresses are deleted after 12 hours or 43,200 seconds. This deletion is necessary to avoid routing domains that have changed their IP addresses. To keep the set of top domain IP addresses from the `domains.lst` file up to date, the script will update them every 6 hours (21,600 seconds). Dnsmasq adds IP addresses to the IP address table only if a DNS server makes a query for them.
+
+Resolving domains from the `domains.lst` file is performed asynchronously, which allows you to work with large lists of domains. The number of threads is limited to 30 in the `MAX_PARALLEL_PROCESSES` variable. 
+
+> [!WARNING]  
+> Do not increase the value of `MAX_PARALLEL_PROCESSES` beyond 30 to avoid router hangs! 
+My router has 64 MB, for this amount of DRAM, 30 threads is considered the optimal value. Do not try to increase this value with less DRAM!
 
 Every 3 hours (10,800 seconds) the update function is called, which resolve the domains from `domains.lst` to IP addresses and adds them to the set of IP addresses to keep it up-to-date. The time before the update is declared in the variable `DOMAINS_UPDATE_INTERVAL`
 
