@@ -109,7 +109,7 @@ Thanks to ipset and dnsmasq, all subdomains of sites will be routed through the 
     ```
 8. Run wg-client with the command `wg-client.sh start`
 9. Add the required domains to the `domains.lst` file. To check functionality, add the domain `ident.me`.
-10. Go to the router’s web interface and open `dnsmasq.conf` via `LAN`, `DHCP Server`, `Additional Settings`, `User Configuration File (dnsmasq.conf)`. Add the following lines to this config:
+10. Go to the router’s web interface and open `dnsmasq.conf` via `LAN`, `DHCP Server`, `Additional Settings`, `Custom Configuration File "dnsmasq.conf"`. Add the following lines to this config:
     ```sh
     log-queries
     conf-dir=/etc/storage/WireGuard-client-for-Padavan-firmware/Dnsmasq/config/
