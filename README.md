@@ -76,9 +76,9 @@ Thanks to ipset and dnsmasq, all subdomains of sites will be routed through the 
 1. Download or clone this repository to your PC.
 2. Upload the project directory to the router with the command:
     ```sh
-    scp -r WireGuard-client-for-Padavan-firmware admin@192.168.1.1:/etc/storage
+    scp -r WireGuard-client-for-Padavan-firmware-main  admin@192.168.1.1:/etc/storage
     ```
-3. Connect via SSH to the router and navigate to the `/etc/storage/WireGuard-client-for-Padavan-firmware` directory.
+3. Connect via SSH to the router and navigate to the `/etc/storage/WireGuard-client-for-Padavan-firmware-main` directory.
 4. Use `vi` to edit the `wg-client.sh` file and change these variables to your own values:
     ```sh
     IFACE="wg0"
@@ -123,12 +123,12 @@ Thanks to ipset and dnsmasq, all subdomains of sites will be routed through the 
 10. Go to the router’s web interface and open `dnsmasq.conf` via `LAN`, `DHCP Server`, `Additional Settings`, `Custom Configuration File "dnsmasq.conf"`. Add the following lines to this config:
     ```sh
     log-queries
-    conf-dir=/etc/storage/WireGuard-client-for-Padavan-firmware/config/Dnsmasq/
+    conf-dir=/etc/storage/WireGuard-client-for-Padavan-firmware-main/config/Dnsmasq/
     ```
     Save the configuration.
 11. To automatically run the script after turning on the router, you can place the command (optional)
     ```sh
-    (cd /etc/storage/WireGuard-client-for-Padavan-firmware && ./wg-client.sh start >/dev/null 2>&1) &
+    (cd /etc/storage/WireGuard-client-for-Padavan-firmware-main && ./wg-client.sh start >/dev/null 2>&1) &
     ```
     in the file `/etc/storage/started_script.sh` or use the router's web interface by going to `Customization`, `Scripts`, `Run After Router Started`.
 12. The script implements IPset backup and recovery. If your power goes out or you frequently reboot your router, you can change the value of the `IPSET_BACKUP="false"` variable to true in the script code, the backup will be saved along the path `config/ipset_backup.conf`. Backup occurs every 3 hours, its time is declared in the `IPSET_BACKUP_INTERVAL` variable. Restoration from the backup occurs when the script is restarted (`wg-client.sh start`)
